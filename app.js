@@ -223,10 +223,11 @@ async function saveData() {
     alert("Failed to save data. Check console for details.");
   }
 }
-  });
+ //== });
   localStorage.setItem(getWeekKey(), JSON.stringify(data));
   const now = new Date();
   document.getElementById("saveStatus").textContent =
     `✅ Data saved locally! (${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} on ${now.toLocaleDateString("en-GB")})`;
   setTimeout(() => (document.getElementById("saveStatus").textContent = ""), 4000);
 }
+
