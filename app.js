@@ -1,3 +1,5 @@
+console.log("🔵 app.js loaded");
+
 // === Employee and Shift Data ===
 const employees = [
   { name: "Sudhir Kumar", contact: "+91-94470XXXX" },
@@ -34,11 +36,8 @@ function getMonday(d) {
 function getWeekKey() { return currentWeekStart.toISOString().split("T")[0]; }
 
 // === Table ===
-// FIND this line in createSchedulerTable():
-// const savedData = JSON.parse(localStorage.getItem(getWeekKey())) || {};
-
-// REPLACE it with:
 async function createSchedulerTable() {
+  console.log("📊 Creating table...");
   const tbody = document.getElementById("schedulerBody");
   const thead = document.getElementById("tableHeader");
   tbody.innerHTML = "";
@@ -67,12 +66,14 @@ async function createSchedulerTable() {
     const doc = await db.collection('schedules').doc(weekKey).get();
     if (doc.exists) {
       savedData = doc.data();
+      console.log("✅ Data loaded from Firebase");
+    } else {
+      console.log("ℹ️ No saved data for this week");
     }
   } catch (error) {
-    console.error("Error loading data:", error);
+    console.error("❌ Error loading data:", error);
   }
 
-  // Rest of your table creation code stays the same...
   employees.forEach(emp => {
     const row = document.createElement("tr");
     const nameCell = document.createElement("td");
@@ -120,25 +121,35 @@ async function createSchedulerTable() {
   document.getElementById("weekRange").textContent =
     `${weekDays[0].dateStr} - ${weekDays[6].dateStr}`;
 }
-// === Login ===
-document.getElementById("loginBtn").addEventListener("click", () => {
-  console.log("🔘 Login button clicked");
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
 
-  if (username === "admin" && password === "1234") {
-    console.log("✅ Correct credentials");
-    alert("Login successful! Loading scheduler...");
-    showSchedulerPage();
+// === Login ===
+console.log("🔐 Setting up login...");
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn) {
+    console.log("✅ Login button found");
+    loginBtn.addEventListener("click", () => {
+      console.log("🔘 Login button clicked");
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (username === "admin" && password === "1234") {
+        console.log("✅ Correct credentials");
+        alert("Login successful! Loading scheduler...");
+        showSchedulerPage();
+      } else {
+        console.log("❌ Wrong credentials");
+        alert("Invalid username or password!");
+      }
+    });
   } else {
-    console.log("❌ Wrong credentials");
-    alert("Invalid username or password!");
+    console.error("❌ Login button NOT found!");
   }
 });
 
-
 // === Page Transitions ===
 function showSchedulerPage() {
+  console.log("📄 Showing scheduler page");
   document.getElementById("loginPage").classList.remove("active-view");
   setTimeout(() => {
     document.getElementById("loginPage").classList.add("hidden");
@@ -190,11 +201,10 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   createSchedulerTable();
 });
 
-// REPLACE your saveData() function with this:
 async function saveData() {
+  console.log("💾 Saving data...");
   const rows = document.querySelectorAll("#schedulerBody tr");
   const data = {};
-  
   rows.forEach(row => {
     const empName = row.cells[0].querySelector("strong").textContent;
     data[empName] = {};
@@ -202,33 +212,66 @@ async function saveData() {
       const select = row.cells[i].querySelector("select");
       const input = row.cells[i].querySelector("input");
       const dayKey = ["mon","tue","wed","thu","fri","sat","sun"][i-1];
-      data[empName][dayKey] = { 
-        status: select.value, 
-        shift: input.value 
-      };
+      data[empName][dayKey] = { status: select.value, shift: input.value };
     }
   });
 
   try {
-    // Save to Firebase instead of localStorage
     const weekKey = getWeekKey();
     await db.collection('schedules').doc(weekKey).set(data);
+    console.log("✅ Data saved successfully");
     
     const now = new Date();
-    document.getElementById("saveStatus").textContent = 
+    document.getElementById("saveStatus").textContent =
       `✅ Data saved to cloud! (${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} on ${now.toLocaleDateString("en-GB")})`;
     setTimeout(() => (document.getElementById("saveStatus").textContent = ""), 4000);
   } catch (error) {
-    console.error("Error saving:", error);
+    console.error("❌ Error saving:", error);
     alert("Failed to save data. Check console for details.");
   }
 }
- //== });
-  localStorage.setItem(getWeekKey(), JSON.stringify(data));
-  const now = new Date();
-  document.getElementById("saveStatus").textContent =
-    `✅ Data saved locally! (${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} on ${now.toLocaleDateString("en-GB")})`;
-  setTimeout(() => (document.getElementById("saveStatus").textContent = ""), 4000);
-//==}
 
+console.log("✅ app.js fully loaded");
+```
 
+#### **File 4: style.css** (Keep your existing one)
+
+---
+
+### **Step 3: Deploy Correctly**
+
+1. **Create a NEW folder** on your Desktop called `ShiftApp`
+
+2. **Put these 4 files in it:**
+   - index.html
+   - app.js
+   - style.css
+   - firebase-config.js
+
+3. **Open `firebase-config.js`** and add YOUR Firebase credentials
+
+4. **Test locally first:**
+   - Double-click `index.html`
+   - Press F12 → Console
+   - You should see: "✅ Firebase initialized successfully!"
+   - Try logging in
+
+5. **If local works, deploy to Netlify:**
+   - Go to: https://app.netlify.com/drop
+   - Drag the `ShiftApp` folder (the whole folder!)
+   - Wait for deployment
+
+---
+
+### **Step 4: Verify Deployment**
+
+After deployment, check:
+
+1. **Visit your site**
+2. **Press F12 → Console tab**
+3. **You should see:**
+```
+   ✅ Firebase initialized successfully!
+   🔐 Setting up login...
+   ✅ Login button found
+   ✅ app.js fully loaded
