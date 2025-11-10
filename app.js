@@ -33,9 +33,12 @@ function getMonday(d) {
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(d.setDate(diff));
 }
-function getWeekKey() { return currentWeekStart.toISOString().split("T")[0]; }
 
-// === Table ===
+function getWeekKey() { 
+  return currentWeekStart.toISOString().split("T")[0]; 
+}
+
+// === Table Creation ===
 async function createSchedulerTable() {
   console.log("📊 Creating table...");
   const tbody = document.getElementById("schedulerBody");
@@ -122,7 +125,7 @@ async function createSchedulerTable() {
     `${weekDays[0].dateStr} - ${weekDays[6].dateStr}`;
 }
 
-// === Login ===
+// === Login Handler ===
 console.log("🔐 Setting up login...");
 document.addEventListener('DOMContentLoaded', function() {
   const loginBtn = document.getElementById("loginBtn");
@@ -142,6 +145,13 @@ document.addEventListener('DOMContentLoaded', function() {
         alert("Invalid username or password!");
       }
     });
+    
+    // Allow Enter key on password field
+    document.getElementById("password").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        loginBtn.click();
+      }
+    });
   } else {
     console.error("❌ Login button NOT found!");
   }
@@ -154,57 +164,92 @@ function showSchedulerPage() {
   setTimeout(() => {
     document.getElementById("loginPage").classList.add("hidden");
     document.getElementById("schedulerPage").classList.remove("hidden");
-    setTimeout(() => document.getElementById("schedulerPage").classList.add("active-view"), 50);
-    createSchedulerTable();
+    setTimeout(() => {
+      document.getElementById("schedulerPage").classList.add("active-view");
+      createSchedulerTable();
+    }, 50);
   }, 400);
 }
 
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  document.getElementById("schedulerPage").classList.remove("active-view");
-  setTimeout(() => {
-    document.getElementById("schedulerPage").classList.add("hidden");
-    document.getElementById("loginPage").classList.remove("hidden");
-    setTimeout(() => document.getElementById("loginPage").classList.add("active-view"), 50);
-  }, 400);
+// === Logout Handler ===
+document.addEventListener('DOMContentLoaded', function() {
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      document.getElementById("schedulerPage").classList.remove("active-view");
+      setTimeout(() => {
+        document.getElementById("schedulerPage").classList.add("hidden");
+        document.getElementById("loginPage").classList.remove("hidden");
+        setTimeout(() => document.getElementById("loginPage").classList.add("active-view"), 50);
+      }, 400);
+    });
+  }
 });
 
-// === Access Permission ===
-document.getElementById("accessControl").addEventListener("change", (e) => {
-  accessMode = e.target.value;
-  createSchedulerTable();
+// === Access Control ===
+document.addEventListener('DOMContentLoaded', function() {
+  const accessControl = document.getElementById("accessControl");
+  if (accessControl) {
+    accessControl.addEventListener("change", (e) => {
+      accessMode = e.target.value;
+      createSchedulerTable();
+    });
+  }
 });
 
-// === Navigation & Save ===
-document.getElementById("prevWeekBtn").addEventListener("click", () => {
-  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-  createSchedulerTable();
-});
-document.getElementById("nextWeekBtn").addEventListener("click", () => {
-  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  createSchedulerTable();
-});
-
-document.getElementById("editBtn").addEventListener("click", () => {
-  if (accessMode === "ro") return alert("🔒 Read-only access!");
-  editMode = true;
-  document.getElementById("editBtn").disabled = true;
-  document.getElementById("saveBtn").disabled = false;
-  createSchedulerTable();
-});
-
-document.getElementById("saveBtn").addEventListener("click", () => {
-  if (accessMode === "ro") return alert("🔒 Read-only access!");
-  saveData();
-  editMode = false;
-  document.getElementById("editBtn").disabled = false;
-  document.getElementById("saveBtn").disabled = true;
-  createSchedulerTable();
+// === Navigation Buttons ===
+document.addEventListener('DOMContentLoaded', function() {
+  const prevBtn = document.getElementById("prevWeekBtn");
+  const nextBtn = document.getElementById("nextWeekBtn");
+  
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      createSchedulerTable();
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      createSchedulerTable();
+    });
+  }
 });
 
+// === Edit & Save Buttons ===
+document.addEventListener('DOMContentLoaded', function() {
+  const editBtn = document.getElementById("editBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      if (accessMode === "ro") return alert("🔒 Read-only access!");
+      editMode = true;
+      editBtn.disabled = true;
+      if (saveBtn) saveBtn.disabled = false;
+      createSchedulerTable();
+    });
+  }
+  
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      if (accessMode === "ro") return alert("🔒 Read-only access!");
+      saveData();
+      editMode = false;
+      if (editBtn) editBtn.disabled = false;
+      saveBtn.disabled = true;
+      createSchedulerTable();
+    });
+  }
+});
+
+// === Save Data Function ===
 async function saveData() {
   console.log("💾 Saving data...");
   const rows = document.querySelectorAll("#schedulerBody tr");
   const data = {};
+  
   rows.forEach(row => {
     const empName = row.cells[0].querySelector("strong").textContent;
     data[empName] = {};
@@ -212,7 +257,10 @@ async function saveData() {
       const select = row.cells[i].querySelector("select");
       const input = row.cells[i].querySelector("input");
       const dayKey = ["mon","tue","wed","thu","fri","sat","sun"][i-1];
-      data[empName][dayKey] = { status: select.value, shift: input.value };
+      data[empName][dayKey] = { 
+        status: select.value, 
+        shift: input.value 
+      };
     }
   });
 
@@ -222,9 +270,11 @@ async function saveData() {
     console.log("✅ Data saved successfully");
     
     const now = new Date();
-    document.getElementById("saveStatus").textContent =
-      `✅ Data saved to cloud! (${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} on ${now.toLocaleDateString("en-GB")})`;
-    setTimeout(() => (document.getElementById("saveStatus").textContent = ""), 4000);
+    const statusEl = document.getElementById("saveStatus");
+    if (statusEl) {
+      statusEl.textContent = `✅ Data saved to cloud! (${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} on ${now.toLocaleDateString("en-GB")})`;
+      setTimeout(() => (statusEl.textContent = ""), 4000);
+    }
   } catch (error) {
     console.error("❌ Error saving:", error);
     alert("Failed to save data. Check console for details.");
